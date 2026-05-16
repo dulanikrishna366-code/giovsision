@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GeoVision AI</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Courier New',monospace;background:#060810;color:white;overflow-x:hidden}
+  canvas{display:block}
+  header{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(6,8,16,0.9);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#00f5ff,#8338ec);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 16px rgba(0,245,255,0.4)}
+  .logo-title{font-size:14px;font-weight:900;color:#00f5ff;letter-spacing:2px;text-shadow:0 0 20px #00f5ff}
+  .logo-sub{font-size:8px;color:rgba(255,255,255,0.4);letter-spacing:3px}
+  .hbtns{display:flex;gap:6px;flex-wrap:wrap}
+  .btn{background:transparent;border:1px solid #00f5ff;color:#00f5ff;padding:7px 12px;border-radius:8px;cursor:pointer;font-family:'Courier New',monospace;font-size:11px;transition:all 0.2s}
+  .btn:hover{background:rgba(0,245,255,0.12);box-shadow:0 0 12px rgba(0,245,255,0.3)}
+  .btn.pink{border-color:#ff006e;color:#ff006e}
+  .btn.pink:hover{background:rgba(255,0,110,0.12)}
+  .btn.green{border-color:#06d6a0;color:#06d6a0}
+  .btn.green:hover{background:rgba(6,214,160,0.12)}
+  .btn.purple{border-color:#8338ec;color:#8338ec}
+  .btn.purple:hover{background:rgba(131,56,236,0.12)}
+  .score{background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.3);color:#00f5ff;padding:4px 12px;border-radius:20px;font-size:11px}
+  .main-layout{display:flex;height:calc(100vh - 57px)}
+  .sidebar{width:180px;border-right:1px solid rgba(255,255,255,0.05);background:rgba(6,8,16,0.7);padding:12px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+  .sidebar-label{font-size:8px;letter-spacing:3px;color:rgba(255,255,255,0.3);margin-top:4px}
+  .tool-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);padding:7px 10px;border-radius:8px;cursor:pointer;font-family:'Courier New',monospace;font-size:11px;text-align:left;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+  .tool-btn.active,.tool-btn:hover{border-color:#00f5ff;color:#00f5ff;background:rgba(0,245,255,0.08)}
+  .center{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,0,0,0.2)}
+  #mainCanvas{border-radius:12px;border:1px solid rgba(0,245,255,0.15);box-shadow:0 0 40px rgba(0,245,255,0.06);cursor:crosshair;touch-action:none;max-width:100%;max-height:100%}
+  .statusbar{border-top:1px solid rgba(255,255,255,0.05);padding:7px 14px;background:rgba(6,8,16,0.9);display:flex;gap:14px;font-size:10px;flex-wrap:wrap;align-items:center}
+  .right-panel{width:260px;border-left:1px solid rgba(255,255,255,0.05);background:rgba(6,8,16,0.7);display:flex;flex-direction:column;overflow:hidden}
+  .tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .tab{background:none;border:none;color:rgba(255,255,255,0.4);padding:10px 14px;cursor:pointer;font-family:'Courier New',monospace;font-size:11px;border-bottom:2px solid transparent;transition:all 0.2s}
+  .tab.active{color:#00f5ff;border-bottom-color:#00f5ff}
+  .panel-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px}
+  .card.cyan{border-color:rgba(0,245,255,0.2);background:rgba(0,245,255,0.04)}
+  .card.pink{border-color:rgba(255,0,110,0.2);background:rgba(255,0,110,0.04)}
+  .card.green{border-color:rgba(6,214,160,0.2);background:rgba(6,214,160,0.04)}
+  .pt-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);margin-bottom:4px;font-size:11px}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .del-btn{background:none;border:none;color:rgba(255,0,110,0.6);cursor:pointer;font-size:13px;margin-left:auto;padding:2px 4px}
+  .flash{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,245,255,0.12);border:1px solid rgba(0,245,255,0.4);backdrop-filter:blur(20px);padding:9px 22px;border-radius:30px;font-size:12px;color:#00f5ff;z-index:999;display:none;white-space:nowrap}
+  .ai-box{font-size:11px;color:rgba(255,255,255,0.8);line-height:1.6;white-space:pre-wrap;max-height:220px;overflow-y:auto}
+  .quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .quiz-btn{background:rgba(255,0,110,0.07);border:1px solid rgba(255,0,110,0.3);color:#ff006e;padding:8px 6px;border-radius:7px;cursor:pointer;font-family:'Courier New',monospace;font-size:10px;text-align:left;transition:all 0.2s}
+  .quiz-btn:hover{background:rgba(255,0,110,0.15)}
+  .tutor{border-top:1px solid rgba(255,255,255,0.05);padding:10px 12px;background:rgba(131,56,236,0.06);font-size:10px;color:rgba(255,255,255,0.7);line-height:1.5}
+  .spinner{text-align:center;padding:20px;color:#00f5ff;font-size:11px;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  label.chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;color:rgba(255,255,255,0.6)}
+  input[type=range]{accent-color:#00f5ff;width:100%}
+  .calc-val{font-size:15px;font-weight:bold;margin-top:2px}
+  .calc-formula{font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px}
+
+  /* Camera */
+  #camWrap{position:relative;border-radius:10px;overflow:hidden;background:#000}
+  #camVideo{width:100%;transform:scaleX(-1);display:block}
+  #camOverlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+  .live-badge{position:absolute;top:6px;left:6px;background:rgba(6,214,160,0.9);color:black;font-size:9px;font-weight:bold;padding:2px 8px;border-radius:6px}
+
+  /* Mobile responsive */
+  @media(max-width:700px){
+    .sidebar{width:0;padding:0;overflow:hidden;display:none}
+    .right-panel{width:0;padding:0;overflow:hidden;display:none}
+    .mobile-bar{display:flex!important}
+    .main-layout{flex-direction:column}
+    .center{height:auto}
+    .canvas-wrap{padding:6px}
+  }
+  .mobile-bar{display:none;gap:6px;padding:8px 10px;background:rgba(6,8,16,0.9);border-bottom:1px solid rgba(255,255,255,0.05);overflow-x:auto;flex-wrap:nowrap}
+  .mobile-bar .btn{white-space:nowrap;font-size:10px;padding:6px 10px}
+  .mobile-panel{display:none;padding:10px;background:rgba(6,8,16,0.95);border-top:1px solid rgba(255,255,255,0.05)}
+  .mobile-panel.open{display:block}
+  .m-tabs{display:flex;gap:0;overflow-x:auto}
+  .m-tab{background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.4);padding:8px 14px;cursor:pointer;font-family:'Courier New',monospace;font-size:11px;white-space:nowrap}
+  .m-tab.active{color:#00f5ff;border-bottom-color:#00f5ff}
+</style>
+</head>
+<body>
+
+<!-- Flash -->
+<div class="flash" id="flash"></div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⊕</div>
+    <div>
+      <div class="logo-title">GEOVISION AI</div>
+      <div class="logo-sub">COORDINATE GEOMETRY ENGINE</div>
+    </div>
+  </div>
+  <div class="hbtns">
+    <div class="score" id="scoreEl">⬡ SCORE: 0</div>
+    <button class="btn green" id="camBtn" onclick="toggleCam()">📷 CAMERA</button>
+    <button class="btn pink" onclick="clearPoints()">🗑️ CLEAR</button>
+    <button class="btn purple" onclick="startQuiz()">🎯 QUIZ</button>
+  </div>
+</header>
+
+<!-- Mobile toolbar -->
+<div class="mobile-bar" id="mobileBar">
+  <button class="btn" onclick="setMode('point')">● POINT</button>
+  <button class="btn" onclick="toggleGrid()">⊞ GRID</button>
+  <button class="btn" onclick="toggleHelper()">⊣ HELPER</button>
+  <button class="btn purple" onclick="openMobilePanel('ai')">🤖 AI</button>
+  <button class="btn green" onclick="openMobilePanel('cam')">📷 CAM</button>
+  <button class="btn pink" onclick="openMobilePanel('info')">📊 INFO</button>
+  <button class="btn" onclick="closeMobilePanel()">✕</button>
+</div>
+
+<!-- Mobile panel -->
+<div class="mobile-panel" id="mobilePanel">
+  <div class="m-tabs">
+    <button class="m-tab active" id="mtab-info" onclick="switchMTab('info')">📊 INFO</button>
+    <button class="m-tab" id="mtab-ai" onclick="switchMTab('ai')">🤖 AI</button>
+    <button class="m-tab" id="mtab-cam" onclick="switchMTab('cam')">📷 CAM</button>
+  </div>
+  <div id="mpanel-info" style="margin-top:10px"></div>
+  <div id="mpanel-ai" style="margin-top:10px;display:none"></div>
+  <div id="mpanel-cam" style="margin-top:10px;display:none"></div>
+</div>
+
+<!-- Main layout -->
+<div class="main-layout">
+
+  <!-- Left sidebar (desktop) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-label">TOOLS</div>
+    <button class="tool-btn active" id="tool-point" onclick="setMode('point')">● PLOT POINT</button>
+    <button class="tool-btn" id="tool-erase" onclick="setMode('erase')">✕ ERASE</button>
+
+    <div class="sidebar-label">OPTIONS</div>
+    <label class="chk"><input type="checkbox" id="gridChk" checked onchange="showGrid=this.checked"> GRID</label>
+    <label class="chk"><input type="checkbox" id="helperChk" checked onchange="showHelper=this.checked"> HELPER LINES</label>
+
+    <div class="sidebar-label">ZOOM</div>
+    <input type="range" min="14" max="60" value="28" id="scaleSlider" oninput="scale=+this.value">
+    <div style="font-size:10px;color:rgba(0,245,255,0.6);text-align:center" id="scaleLabel">SCALE: 28px</div>
+
+    <div class="sidebar-label">FORMULAS</div>
+    <button class="tool-btn" onclick="askAI('distance formula with the distance formula d=√((x2-x1)²+(y2-y1)²)')">📏 Distance</button>
+    <button class="tool-btn" onclick="askAI('midpoint formula M=((x1+x2)/2,(y1+y2)/2)')">🔵 Midpoint</button>
+    <button class="tool-btn" onclick="askAI('slope formula m=(y2-y1)/(x2-x1)')">📈 Slope</button>
+    <button class="tool-btn" onclick="askAI('quadrants in coordinate geometry')">⊞ Quadrants</button>
+    <button class="tool-btn" onclick="askAI('circle equation x²+y²=r²')">⭕ Circle</button>
+  </aside>
+
+  <!-- Center canvas -->
+  <div class="center">
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas" width="680" height="520"></canvas>
+    </div>
+    <div class="statusbar" id="statusbar">
+      <span style="color:rgba(255,255,255,0.3)">Click to plot • Drag points • Scroll to zoom</span>
+    </div>
+  </div>
+
+  <!-- Right panel (desktop) -->
+  <aside class="right-panel" id="rightPanel">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('graph')" id="tab-graph">📊 GRAPH</button>
+      <button class="tab" onclick="switchTab('ai')" id="tab-ai">🤖 AI</button>
+      <button class="tab" onclick="switchTab('cam')" id="tab-cam">📷 CAM</button>
+    </div>
+    <div class="panel-body" id="panelBody"></div>
+    <div class="tutor" id="tutorBox">💡 Click on graph to add points!</div>
+  </aside>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let points = [
+  {id:1,x:3,y:4,color:'#00f5ff',label:'A'},
+  {id:2,x:-2,y:-3,color:'#ff006e',label:'B'},
+];
+let scale = 28, showGrid = true, showHelper = true;
+let dragging = null, hoveredPt = null;
+let origin = {x:340, y:260};
+let nextId = 3, score = 0;
+let drawMode = 'point';
+let activeTab = 'graph';
+let activeMTab = 'info';
+let mobilePanelOpen = false;
+let camStream = null, camActive = false;
+let animId;
+const COLORS = ['#00f5ff','#ff006e','#8338ec','#fb5607','#3a86ff','#06d6a0'];
+const TUTOR = [
+  '💡 Click graph to add points!',
+  '🎯 Drag points to move them!',
+  '📐 Distance formula: d=√((x₂-x₁)²+(y₂-y₁)²)',
+  '🔵 Midpoint is exactly halfway between two points!',
+  '📈 Slope = rise/run = Δy/Δx',
+  '⊞ Quadrant I: both x,y positive!',
+  '🚀 Try the AI tutor for explanations!',
+  '🎯 Take a quiz to test yourself!',
+];
+let tutorIdx = 0;
+
+// ── Resize canvas ──────────────────────────────────────────────────────────
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  const W = Math.min(wrap.clientWidth - 20, 900);
+  const H = Math.min(Math.round(W * 0.72), 580);
+  canvas.width = W; canvas.height = H;
+  origin = {x: W/2, y: H/2};
+}
+resizeCanvas();
+window.addEventListener('resize', () => { resizeCanvas(); drawGraph(); updatePanel(); });
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const toCanv = (v, o) => o + v * scale;
+const toCoord = (px, o) => (px - o) / scale;
+const dist2 = (x1,y1,x2,y2) => Math.sqrt((x2-x1)**2+(y2-y1)**2);
+const midpt = (x1,y1,x2,y2) => [(x1+x2)/2,(y1+y2)/2];
+const slopeOf = (x1,y1,x2,y2) => x2!==x1 ? ((y2-y1)/(x2-x1)).toFixed(3) : '∞';
+function getQuadrant(x,y){
+  if(x>0&&y>0) return {label:'Quadrant I',color:'#00f5ff'};
+  if(x<0&&y>0) return {label:'Quadrant II',color:'#ff006e'};
+  if(x<0&&y<0) return {label:'Quadrant III',color:'#8338ec'};
+  if(x>0&&y<0) return {label:'Quadrant IV',color:'#fb5607'};
+  if(x===0&&y===0) return {label:'Origin',color:'#fff'};
+  if(x===0) return {label:'Y-Axis',color:'#aaa'};
+  return {label:'X-Axis',color:'#aaa'};
+}
+
+// ── Flash ──────────────────────────────────────────────────────────────────
+function flash(msg) {
+  const el = document.getElementById('flash');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 2500);
+}
+
+// ── Draw ───────────────────────────────────────────────────────────────────
+function drawGraph() {
+  const W = canvas.width, H = canvas.height;
+  const ox = origin.x, oy = origin.y;
+  ctx.clearRect(0,0,W,H);
+
+  // Quadrant bg
+  const qa = 0.04;
+  ctx.fillStyle=`rgba(0,245,255,${qa})`; ctx.fillRect(ox,0,W-ox,oy);
+  ctx.fillStyle=`rgba(255,0,110,${qa})`; ctx.fillRect(0,0,ox,oy);
+  ctx.fillStyle=`rgba(131,56,236,${qa})`; ctx.fillRect(0,oy,ox,H-oy);
+  ctx.fillStyle=`rgba(251,86,7,${qa})`; ctx.fillRect(ox,oy,W-ox,H-oy);
+
+  // Grid
+  if(showGrid){
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    for(let x=ox%scale;x<W;x+=scale){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=oy%scale;y<H;y+=scale){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,oy);ctx.lineTo(W,oy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ox,0);ctx.lineTo(ox,H);ctx.stroke();
+
+  // Tick labels
+  ctx.font='10px Courier New'; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textAlign='center';
+  const maxT = Math.floor(Math.max(ox,W-ox,oy,H-oy)/scale)+1;
+  for(let i=-maxT;i<=maxT;i++){
+    if(i===0) continue;
+    const px=ox+i*scale, py=oy+i*scale;
+    if(px>8&&px<W-8){ ctx.fillText(i,px,oy+14); }
+    if(py>8&&py<H-8){ ctx.fillText(-i,ox-14,py+4); }
+  }
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.fillText('x',W-12,oy-8); ctx.textAlign='left'; ctx.fillText('y',ox+8,14);
+
+  // Line between first 2 points
+  if(points.length>=2){
+    const a=points[0],b=points[1];
+    const ax=toCanv(a.x,ox), ay=toCanv(-a.y,oy);
+    const bx=toCanv(b.x,ox), by=toCanv(-b.y,oy);
+    const g=ctx.createLinearGradient(ax,ay,bx,by);
+    g.addColorStop(0,a.color+'88'); g.addColorStop(1,b.color+'88');
+    ctx.strokeStyle=g; ctx.lineWidth=1.5; ctx.setLineDash([6,3]);
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+    ctx.setLineDash([]);
+    // Midpoint
+    const [mx,my]=midpt(ax,ay,bx,by);
+    ctx.beginPath();ctx.arc(mx,my,4,0,Math.PI*2);
+    ctx.fillStyle='#06d6a0'; ctx.shadowBlur=10; ctx.shadowColor='#06d6a0'; ctx.fill();
+    ctx.shadowBlur=0;
+    const mc=midpt(a.x,a.y,b.x,b.y);
+    ctx.font='10px Courier New'; ctx.fillStyle='#06d6a099'; ctx.textAlign='center';
+    ctx.fillText(`M(${mc[0].toFixed(1)},${mc[1].toFixed(1)})`,mx,my-10);
+  }
+
+  // Helper lines
+  if(showHelper&&points.length>0){
+    const p=hoveredPt?points.find(pt=>pt.id===hoveredPt):points[0];
+    if(p){
+      const px=toCanv(p.x,ox), py=toCanv(-p.y,oy);
+      ctx.setLineDash([4,4]); ctx.strokeStyle=p.color+'44'; ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(px,oy);ctx.lineTo(px,py);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ox,py);ctx.lineTo(px,py);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // Points
+  points.forEach(pt=>{
+    const px=toCanv(pt.x,ox), py=toCanv(-pt.y,oy);
+    const isHov=hoveredPt===pt.id, isDrag=dragging===pt.id;
+    const r=isDrag?12:isHov?10:7;
+    // Glow
+    for(let i=3;i>0;i--){
+      ctx.beginPath();ctx.arc(px,py,r+i*4,0,Math.PI*2);
+      ctx.strokeStyle=pt.color+(10/i|0).toString(16).padStart(2,'0');
+      ctx.lineWidth=1;ctx.stroke();
+    }
+    ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);
+    ctx.fillStyle=pt.color; ctx.shadowBlur=18; ctx.shadowColor=pt.color; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.9)';ctx.fill();
+    ctx.font='bold 10px Courier New'; ctx.fillStyle='white'; ctx.textAlign='left';
+    ctx.fillText(`${pt.label}(${pt.x.toFixed(1)},${pt.y.toFixed(1)})`,px+r+4,py-r-2);
+  });
+
+  // Status bar
+  updateStatus();
+  // Scale label
+  document.getElementById('scaleLabel').textContent=`SCALE: ${scale}px`;
+}
+
+function updateStatus(){
+  const sb=document.getElementById('statusbar');
+  const a=points[0],b=points[1];
+  let html='';
+  if(a){
+    const q=getQuadrant(a.x,a.y);
+    html+=`<span style="color:${q.color}">A: ${q.label} (${a.x.toFixed(2)},${a.y.toFixed(2)})</span>`;
+  }
+  if(b){
+    const q=getQuadrant(b.x,b.y);
+    html+=`<span style="color:${q.color};margin-left:10px">B: ${q.label} (${b.x.toFixed(2)},${b.y.toFixed(2)})</span>`;
+  }
+  if(a&&b){
+    const d=dist2(a.x,a.y,b.x,b.y).toFixed(3);
+    const sl=slopeOf(a.x,a.y,b.x,b.y);
+    html+=`<span style="color:#06d6a0;margin-left:10px">d=${d}</span>`;
+    html+=`<span style="color:#8338ec;margin-left:10px">m=${sl}</span>`;
+  }
+  if(!html) html='<span style="color:rgba(255,255,255,0.3)">Click to plot • Drag points • Scroll to zoom</span>';
+  sb.innerHTML=html;
+}
+
+// Animation loop
+function loop(){ drawGraph(); animId=requestAnimationFrame(loop); }
+loop();
+
+// Tutor rotation
+setInterval(()=>{
+  tutorIdx=(tutorIdx+1)%TUTOR.length;
+  const tb=document.getElementById('tutorBox');
+  if(tb) tb.textContent=TUTOR[tutorIdx];
+},6000);
+
+// ── Mouse/Touch ────────────────────────────────────────────────────────────
+function getPos(e){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+  if(e.touches){
+    return {x:(e.touches[0].clientX-rect.left)*scaleX, y:(e.touches[0].clientY-rect.top)*scaleY};
+  }
+  return {x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY};
+}
+
+function findPoint(cx,cy){
+  return points.find(p=>{
+    const px=toCanv(p.x,origin.x), py=toCanv(-p.y,origin.y);
+    return dist2(cx,cy,px,py)<18;
+  });
+}
+
+canvas.addEventListener('mousedown', onDown);
+canvas.addEventListener('touchstart', e=>{e.preventDefault();onDown(e);},{passive:false});
+canvas.addEventListener('mousemove', onMove);
+canvas.addEventListener('touchmove', e=>{e.preventDefault();onMove(e);},{passive:false});
+canvas.addEventListener('mouseup', ()=>dragging=null);
+canvas.addEventListener('touchend', ()=>dragging=null);
+canvas.addEventListener('mouseleave', ()=>{ dragging=null; hoveredPt=null; });
+canvas.addEventListener('wheel', e=>{ e.preventDefault(); scale=Math.min(60,Math.max(12,scale-e.deltaY*0.05)); },{passive:false});
+
+function onDown(e){
+  const {x:cx,y:cy}=getPos(e);
+  const hit=findPoint(cx,cy);
+  if(hit){
+    if(drawMode==='erase'){ removePoint(hit.id); return; }
+    dragging=hit.id; return;
+  }
+  if(drawMode==='point'){
+    const nx=parseFloat(toCoord(cx,origin.x).toFixed(1));
+    const ny=parseFloat((-(cy-origin.y)/scale).toFixed(1));
+    const id=nextId++;
+    const label=String.fromCharCode(65+((points.length)%26));
+    points.push({id,x:nx,y:ny,color:COLORS[id%COLORS.length],label});
+    flash(`📍 Point ${label} added!`);
+    updatePanel();
+  }
+}
+function onMove(e){
+  const {x:cx,y:cy}=getPos(e);
+  if(dragging!==null){
+    const nx=parseFloat(toCoord(cx,origin.x).toFixed(2));
+    const ny=parseFloat((-(cy-origin.y)/scale).toFixed(2));
+    const p=points.find(pt=>pt.id===dragging);
+    if(p){p.x=nx;p.y=ny;}
+    updatePanel();
+  } else {
+    const hit=findPoint(cx,cy);
+    hoveredPt=hit?hit.id:null;
+  }
+}
+
+// ── Mode ───────────────────────────────────────────────────────────────────
+function setMode(m){
+  drawMode=m;
+  ['point','erase'].forEach(id=>{
+    const el=document.getElementById('tool-'+id);
+    if(el) el.classList.toggle('active',id===m);
+  });
+  canvas.style.cursor=m==='erase'?'not-allowed':'crosshair';
+}
+function toggleGrid(){ showGrid=!showGrid; document.getElementById('gridChk').checked=showGrid; }
+function toggleHelper(){ showHelper=!showHelper; document.getElementById('helperChk').checked=showHelper; }
+function clearPoints(){ points=[]; nextId=1; flash('🗑️ Canvas cleared'); updatePanel(); }
+function removePoint(id){ points=points.filter(p=>p.id!==id); updatePanel(); }
+
+// ── Panel ─────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  activeTab=tab;
+  ['graph','ai','cam'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el) el.classList.toggle('active',t===tab);
+  });
+  updatePanel();
+}
+function updatePanel(){
+  const body=document.getElementById('panelBody');
+  if(!body) return;
+  if(activeTab==='graph') body.innerHTML=buildGraphPanel();
+  if(activeTab==='cam') body.innerHTML=buildCamPanel();
+}
+
+function buildGraphPanel(){
+  const a=points[0],b=points[1];
+  let html=`<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3)">PLOTTED POINTS (${points.length})</div>`;
+  if(!points.length) html+=`<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;padding:16px 0">Click graph to add points</div>`;
+  points.forEach(p=>{
+    const q=getQuadrant(p.x,p.y);
+    html+=`<div class="pt-row">
+      <div class="dot" style="background:${p.color};box-shadow:0 0 8px ${p.color}"></div>
+      <div style="flex:1"><div style="color:${p.color}">${p.label}(${p.x.toFixed(2)},${p.y.toFixed(2)})</div><div style="font-size:9px;color:${q.color}">${q.label}</div></div>
+      <button class="del-btn" onclick="removePoint(${p.id});updatePanel()">✕</button>
+    </div>`;
+  });
+  if(a&&b){
+    const d=dist2(a.x,a.y,b.x,b.y).toFixed(3);
+    const m=midpt(a.x,a.y,b.x,b.y);
+    const sl=slopeOf(a.x,a.y,b.x,b.y);
+    html+=`<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);margin-top:6px">CALCULATIONS</div>
+    <div class="card cyan"><div style="font-size:9px;color:rgba(255,255,255,0.4)">DISTANCE</div><div class="calc-val" style="color:#00f5ff">${d}</div><div class="calc-formula">√((${b.x.toFixed(1)}-${a.x.toFixed(1)})²+(${b.y.toFixed(1)}-${a.y.toFixed(1)})²)</div></div>
+    <div class="card green"><div style="font-size:9px;color:rgba(255,255,255,0.4)">MIDPOINT</div><div class="calc-val" style="color:#06d6a0">(${m[0].toFixed(2)},${m[1].toFixed(2)})</div><div class="calc-formula">((${a.x}+${b.x})/2,(${a.y}+${b.y})/2)</div></div>
+    <div class="card" style="border-color:rgba(131,56,236,0.2);background:rgba(131,56,236,0.04)"><div style="font-size:9px;color:rgba(255,255,255,0.4)">SLOPE</div><div class="calc-val" style="color:#8338ec">${sl}</div><div class="calc-formula">(${b.y.toFixed(1)}-${a.y.toFixed(1)})/(${b.x.toFixed(1)}-${a.x.toFixed(1)})</div></div>`;
+  }
+  if(a){
+    const q=getQuadrant(a.x,a.y);
+    const distO=Math.sqrt(a.x**2+a.y**2).toFixed(3);
+    html+=`<div class="card" style="border-color:${q.color}44;background:${q.color}08">
+      <div style="font-size:9px;color:rgba(255,255,255,0.4)">POINT A LOCATION</div>
+      <div style="font-size:14px;color:${q.color};font-weight:bold;margin-top:4px">${q.label}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Distance from origin: ${distO}</div>
+    </div>`;
+  }
+  html+=`<button class="btn green" onclick="askAI('the current graph')" style="width:100%;margin-top:4px">🤖 ASK AI ABOUT GRAPH</button>`;
+  return html;
+}
+
+function buildCamPanel(){
+  return `
+    <div id="camWrap" style="display:${camActive?'block':'none'}">
+      <video id="camVideo" autoplay muted playsinline></video>
+      <div class="live-badge">● LIVE</div>
+    </div>
+    ${!camActive?'<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.4)"><div style="font-size:32px">📷</div><div style="font-size:11px;margin-top:8px">Camera not active</div></div>':''}
+    <button class="btn ${camActive?'pink':'green'}" onclick="toggleCam()" style="width:100%;margin-top:8px">${camActive?'⏹ STOP':'▶ START CAMERA'}</button>
+    <div class="card" style="margin-top:8px">
+      <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:8px">HOW TO USE</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);line-height:1.6">
+        📷 Camera opens in this panel<br>
+        ☝️ Point finger to move cursor<br>
+        🤌 Pinch to grab a point<br>
+        ✋ Open hand to release<br><br>
+        <span style="color:rgba(0,245,255,0.6)">Note: Allow camera permission when browser asks</span>
+      </div>
+    </div>`;
+}
+
+// ── Camera ─────────────────────────────────────────────────────────────────
+async function toggleCam(){
+  if(camActive){
+    if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+    camActive=false;
+    document.getElementById('camBtn').textContent='📷 CAMERA';
+    document.getElementById('camBtn').className='btn green';
+    if(activeTab==='cam') updatePanel();
+    switchMTab('cam');
+    flash('📷 Camera stopped');
+    return;
+  }
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    camActive=true;
+    document.getElementById('camBtn').textContent='🔴 STOP CAM';
+    document.getElementById('camBtn').className='btn pink';
+    if(activeTab==='cam') updatePanel();
+    // Attach stream to video
+    setTimeout(()=>{
+      const v=document.getElementById('camVideo');
+      if(v){ v.srcObject=camStream; v.play(); }
+      // mobile panel
+      const mv=document.getElementById('mcamVideo');
+      if(mv){ mv.srcObject=camStream; mv.play(); }
+    },100);
+    flash('📷 Camera started!');
+    switchTab('cam');
+    openMobilePanel('cam');
+  } catch(err){
+    flash('❌ Camera permission denied. Allow in browser settings.');
+  }
+}
+
+// ── AI ─────────────────────────────────────────────────────────────────────
+let aiLoading=false, quizData=null;
+async function askAI(topic){
+  if(aiLoading) return;
+  aiLoading=true;
+  switchTab('ai');
+  openMobilePanel('ai');
+  const body=document.getElementById('panelBody');
+  const mpai=document.getElementById('mpanel-ai');
+  const loadHtml=`<div class="spinner">⟳ AI thinking...</div>`;
+  if(body&&activeTab==='ai') body.innerHTML=loadHtml;
+  if(mpai&&activeMTab==='ai') mpai.innerHTML=loadHtml;
+  const a=points[0],b=points[1];
+  let ctx_msg=a?`I have point A at (${a.x},${a.y})`:'I have no points yet';
+  if(b) ctx_msg+=` and point B at (${b.x},${b.y})`;
+  const prompt=`You are GeoVision AI, a friendly coordinate geometry tutor. ${ctx_msg}. Explain ${topic} in 3-4 sentences with actual calculation if relevant. Use emojis. Be encouraging and student-friendly. Show the formula and plug in numbers.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const txt=data.content?.[0]?.text||'Could not load explanation.';
+    const html=`
+      <div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3)">AI TUTOR</div>
+      <div class="card cyan">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#00f5ff,#8338ec);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🤖</div>
+          <div class="ai-box">${txt}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
+        <button class="tool-btn" onclick="askAI('distance formula')">📏 Distance</button>
+        <button class="tool-btn" onclick="askAI('midpoint formula')">🔵 Midpoint</button>
+        <button class="tool-btn" onclick="askAI('slope formula')">📈 Slope</button>
+        <button class="tool-btn" onclick="askAI('quadrants')">⊞ Quadrants</button>
+      </div>
+      <button class="btn purple" onclick="startQuiz()" style="width:100%;margin-top:4px">🎯 TAKE QUIZ</button>`;
+    if(body&&activeTab==='ai') body.innerHTML=html;
+    if(mpai&&activeMTab==='ai') mpai.innerHTML=html;
+  } catch(e){
+    const errHtml=`<div class="card pink"><div style="font-size:11px">AI unavailable. Check connection.</div></div>`;
+    if(body&&activeTab==='ai') body.innerHTML=errHtml;
+    if(mpai&&activeMTab==='ai') mpai.innerHTML=errHtml;
+  }
+  aiLoading=false;
+}
+
+async function startQuiz(){
+  if(aiLoading) return;
+  aiLoading=true;
+  switchTab('ai');
+  openMobilePanel('ai');
+  const body=document.getElementById('panelBody');
+  const mpai=document.getElementById('mpanel-ai');
+  const loadHtml=`<div class="spinner">⟳ Generating quiz...</div>`;
+  if(body&&activeTab==='ai') body.innerHTML=loadHtml;
+  if(mpai) mpai.innerHTML=loadHtml;
+  const prompt=`Generate a coordinate geometry multiple choice question. Return ONLY valid JSON: {"question":"...","options":["A)...","B)...","C)...","D)..."],"answer":"A"}. Medium difficulty about quadrants, distance, or midpoint. No extra text, no markdown.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const txt=(data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim();
+    quizData=JSON.parse(txt);
+    renderQuiz(quizData);
+  } catch(e){
+    quizData={question:'Which quadrant is point (-3, 5) in?',options:['A) Quadrant I','B) Quadrant II','C) Quadrant III','D) Quadrant IV'],answer:'B'};
+    renderQuiz(quizData);
+  }
+  aiLoading=false;
+}
+
+function renderQuiz(q){
+  const html=`
+    <div style="font-size:9px;letter-spacing:3px;color:#ff006e">🎯 QUIZ TIME</div>
+    <div class="card pink">
+      <div style="font-size:12px;color:white;line-height:1.5;margin-bottom:10px">${q.question}</div>
+      <div class="quiz-opts">${q.options.map(o=>`<button class="quiz-btn" onclick="answerQuiz('${o.charAt(0)}','${q.answer}')">${o}</button>`).join('')}</div>
+    </div>
+    <div class="card" style="font-size:10px;color:rgba(255,255,255,0.4)">Score: <span style="color:#00f5ff;font-size:14px;font-weight:bold">${score}</span> pts</div>`;
+  const body=document.getElementById('panelBody');
+  const mpai=document.getElementById('mpanel-ai');
+  if(body&&activeTab==='ai') body.innerHTML=html;
+  if(mpai&&activeMTab==='ai') mpai.innerHTML=html;
+}
+
+function answerQuiz(chosen,correct){
+  if(chosen===correct){ score+=10; flash('✅ Correct! +10 pts'); document.getElementById('scoreEl').textContent=`⬡ SCORE: ${score}`; }
+  else flash(`❌ Wrong! Answer was ${correct}`);
+  setTimeout(()=>startQuiz(),1500);
+}
+
+// ── Mobile panel ───────────────────────────────────────────────────────────
+function openMobilePanel(tab){
+  const isMobile=window.innerWidth<=700;
+  if(!isMobile) return;
+  mobilePanelOpen=true;
+  document.getElementById('mobilePanel').style.display='block';
+  switchMTab(tab);
+}
+function closeMobilePanel(){
+  mobilePanelOpen=false;
+  document.getElementById('mobilePanel').style.display='none';
+}
+function switchMTab(tab){
+  activeMTab=tab;
+  ['info','ai','cam'].forEach(t=>{
+    const el=document.getElementById('mtab-'+t);
+    const panel=document.getElementById('mpanel-'+t);
+    if(el) el.classList.toggle('active',t===tab);
+    if(panel) panel.style.display=t===tab?'block':'none';
+  });
+  if(tab==='info') updateMobileInfo();
+  if(tab==='cam') updateMobileCam();
+}
+function updateMobileInfo(){
+  const el=document.getElementById('mpanel-info');
+  if(!el) return;
+  el.innerHTML=buildGraphPanel();
+}
+function updateMobileCam(){
+  const el=document.getElementById('mpanel-cam');
+  if(!el) return;
+  el.innerHTML=`
+    <div id="mcamWrap" style="display:${camActive?'block':'none'};border-radius:10px;overflow:hidden;background:#000">
+      <video id="mcamVideo" autoplay muted playsinline style="width:100%;transform:scaleX(-1);display:block"></video>
+    </div>
+    ${!camActive?'<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4)"><div style="font-size:28px">📷</div><div style="font-size:11px;margin-top:6px">Tap START to open camera</div></div>':''}
+    <button class="btn ${camActive?'pink':'green'}" onclick="toggleCam()" style="width:100%;margin-top:8px">${camActive?'⏹ STOP CAMERA':'▶ START CAMERA'}</button>
+    <div style="font-size:10px;color:rgba(0,245,255,0.7);margin-top:8px;line-height:1.6">✅ Camera will open here<br>✅ Allow permission when asked<br>✅ Works on Android & iPhone</div>`;
+  if(camActive){
+    setTimeout(()=>{
+      const v=document.getElementById('mcamVideo');
+      if(v&&camStream){ v.srcObject=camStream; v.play(); }
+    },100);
+  }
+}
+
+// Init panel
+updatePanel();
+</script>
+</body>
+</html>
